@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="color-scheme" content="light" />
+<title>دليل مبسّط: Node.js Modules و Import / Export</title>
+<style>
+:root{--ink:#17233b;--muted:#53627b;--blue:#2563eb;--bg:#f4f7fc;--surface:#fff;--line:#dce5f2;--good:#087f5b;--bad:#b42318;--code:#111d31}
+*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:var(--bg);color:var(--ink);font-family:Tahoma,Arial,sans-serif;line-height:1.9;font-size:16px}header{background:linear-gradient(125deg,#122b59,#2159c5);color:white;padding:52px 20px 42px}main,.headinner{max-width:960px;margin:auto}header h1{font-size:clamp(27px,4vw,42px);line-height:1.4;margin:0 0 12px}header p{max-width:720px;color:#e2eaff;margin:0}nav{display:flex;gap:8px;flex-wrap:wrap;margin-top:24px}nav a{background:#ffffff18;border:1px solid #ffffff40;color:white;text-decoration:none;padding:5px 13px;border-radius:99px;font-size:13px}main{padding:25px 16px 50px}.card{background:var(--surface);border:1px solid var(--line);border-radius:17px;padding:27px;margin:18px 0;box-shadow:0 4px 17px #1d3b6810}h2{font-size:23px;margin:0 0 15px;color:#164695}h3{font-size:18px;margin:19px 0 8px}p{margin:9px 0 13px}.tag{display:inline-block;background:#e9f0ff;color:#1746a0;padding:2px 10px;border-radius:10px;font-size:13px;font-weight:bold}.note{padding:13px 16px;background:#eaf3ff;border-right:4px solid var(--blue);border-radius:10px;margin:16px 0}.warning{background:#fff5e7;border-right-color:#d97706}.good{background:#eafaf3;border-right-color:var(--good)}pre{direction:ltr;text-align:left;background:var(--code);color:#ecf5ff;border-radius:12px;padding:16px;overflow-x:auto;line-height:1.65;font-size:14px;tab-size:2;white-space:pre}code{font-family:Consolas,'Courier New',monospace;direction:ltr;unicode-bidi:embed}p code,li code,td code{background:#ebf1fb;border-radius:4px;padding:2px 5px;color:#173b82}.codebox{position:relative}.copy{position:absolute;top:9px;right:9px;background:#314767;color:white;border:0;border-radius:6px;padding:5px 10px;font-size:12px;cursor:pointer}.flow{display:flex;align-items:center;justify-content:center;gap:15px;flex-wrap:wrap;margin:25px 0}.node{border:2px solid #bdd3f5;background:#eef5ff;padding:16px 23px;border-radius:12px;text-align:center;min-width:160px}.node.green{background:#e9faf2;border-color:#9cdec1}.arrow{color:#2458a9;font-size:29px;font-weight:bold}.node small{display:block;color:var(--muted)}table{width:100%;border-collapse:collapse;margin:15px 0;font-size:14px}td,th{padding:12px;border:1px solid var(--line);text-align:right;vertical-align:top}th{background:#edf3fe;color:#1a4586}ul,ol{padding-right:23px}.quiz-item{border-top:1px solid var(--line);padding:20px 0}.quiz-item:first-child{border:0}.option{display:block;border:1px solid var(--line);border-radius:9px;padding:9px 12px;margin:7px 0;cursor:pointer}.option:hover{background:#f0f6ff}.option input{margin-left:8px;accent-color:var(--blue)}button.action{cursor:pointer;background:var(--blue);color:white;border:none;border-radius:9px;padding:10px 20px;font-weight:bold;font-size:15px}.result{margin:15px 0;padding:14px;border-radius:10px;background:#eaf3ff;display:none}.answer{font-size:14px;margin:8px 0;display:none;color:var(--muted)}.footer{text-align:center;font-size:13px;color:var(--muted);padding:12px}kbd{border:1px solid var(--line);background:white;padding:2px 6px;border-radius:4px}@media print{header{background:white;color:#122b59;padding:18px 0}header p{color:#333}nav,.copy,.action{display:none!important}body{background:white}.card{box-shadow:none;break-inside:avoid;margin:8px 0;padding:16px}pre{white-space:pre-wrap;font-size:11px}main{padding:0}}@media(max-width:580px){.card{padding:18px}header{padding:33px 16px}h2{font-size:21px}.flow{gap:6px}.node{min-width:123px;padding:12px}}
+</style>
+</head>
+<body>
+<header><div class="headinner">
+<span class="tag">Node.js للمبتدئين</span>
+<h1>فهم Modules و Import / Export ببساطة</h1>
+<p>درس عربي سهل، بأمثلة عملية ورسومات واختبار سريع. الصفحة كاملة تعمل بدون إنترنت، وتقدر ترجع لها في أي وقت.</p>
+<nav><a href="#problem">الفكرة</a><a href="#split">تقسيم الملفات</a><a href="#exports">التصدير والاستيراد</a><a href="#multiple">أكثر من Export</a><a href="#cache">Cache</a><a href="#quiz">اختبر نفسك</a></nav>
+</div></header>
+<main>
+<section class="card" id="problem"><h2>1. إحنا بنحل إيه؟</h2>
+<p>تخيل عامل <b>Server</b> وكل الكود موجود في ملف <code>app.js</code>: تشغيل السيرفر، فحص الـ URL، استقبال طلبات POST، وكتابة الملفات.</p>
+<p>كل ما المشروع يكبر، الملف هيبقى أطول وأصعب في الفهم والصيانة. الحل إننا <b>نقسم المسؤوليات</b> على ملفات.</p>
+<div class="note"><b>الخلاصة:</b> <code>app.js</code> يشغّل السيرفر، و <code>routes.js</code> يقرر يعمل إيه مع كل Request.</div></section>
+<section class="card" id="split"><h2>2. شكل المشروع بعد التقسيم</h2>
+<pre>my-project/
+├── app.js
+├── routes.js
+└── message.txt  (created after POST)</pre>
+<div class="flow"><div class="node"><b>app.js</b><small>يشغّل السيرفر</small></div><div class="arrow">←</div><div class="node green"><b>routes.js</b><small>يتعامل مع req و res</small></div></div>
+<h3>ملف routes.js</h3>
+<div class="codebox"><button class="copy" onclick="copyCode(this)">نسخ</button><pre>const fs = require('fs');
+
+const requestHandler = (req, res) => {
+  const url = req.url;
+  const method = req.method;
+
+  if (url === '/') {
+    res.write('Welcome Home!');
+    return res.end();
+  }
+
+  if (url === '/message' &amp;&amp; method === 'POST') {
+    fs.writeFileSync('message.txt', 'Hello!');
+    res.statusCode = 302;
+    res.setHeader('Location', '/');
+    return res.end();
+  }
+
+  res.statusCode = 404;
+  res.end('Page Not Found');
+};
+
+module.exports = requestHandler;</pre></div>
+<p>الـ <code>requestHandler</code> دالة بتستقبل <code>req</code> و <code>res</code>. جواها بنشوف المستخدم طلب أنهي URL وبأي Method.</p>
+<table><tr><th>الجزء</th><th>المعنى</th></tr><tr><td><code>req</code></td><td>الطلب اللي جاي من المستخدم</td></tr><tr><td><code>res</code></td><td>رد السيرفر للمستخدم</td></tr><tr><td><code>req.url</code></td><td>المسار المطلوب</td></tr><tr><td><code>req.method</code></td><td>نوع الطلب، مثل GET أو POST</td></tr></table>
+<h3>ملف app.js</h3>
+<div class="codebox"><button class="copy" onclick="copyCode(this)">نسخ</button><pre>const http = require('http');
+const routes = require('./routes');
+
+const server = http.createServer(routes);
+server.listen(3000);</pre></div>
+<p>كده <code>app.js</code> بقى بسيط جدًا. ولو حفظت الملفين في نفس المجلد وشغلت <code>node app.js</code>، السيرفر هيستقبل الطلبات على <code>http://localhost:3000</code>.</p></section>
+<section class="card" id="exports"><h2>3. يعني إيه module.exports و require؟</h2>
+<p>اعتبر <code>module.exports</code> باب بتطلع منه حاجة من ملف، و <code>require()</code> الطريقة اللي ملف تاني بيجيب بيها الحاجة دي.</p>
+<div class="flow"><div class="node green"><b>routes.js</b><small>module.exports = requestHandler</small></div><div class="arrow">←</div><div class="node"><b>app.js</b><small>require('./routes')</small></div></div>
+<div class="note good">في المثال ده، المتغير <code>routes</code> هيمسك <b>نفس الدالة</b> اللي صدّرناها باسم <code>requestHandler</code>.</div>
+<h3>ليه createServer(routes) من غير أقواس؟</h3>
+<pre>http.createServer(routes);   // ✅ تمرير الدالة نفسها
+http.createServer(routes()); // ❌ تنفيذها فورًا بدون req و res</pre>
+<p>Node.js محتاج منك <b>مرجع للدالة</b> علشان يناديها لما يجيله Request جديد.</p>
+<h3>ليه require('./routes') فيها ./ ؟</h3><p><code>require('http')</code> بيحمّل Module جاهز داخل Node.js، أما <code>require('./routes')</code> فبيجيب ملف محلي موجود جنب <code>app.js</code>. والامتداد <code>.js</code> اختياري هنا.</p>
+</section>
+<section class="card" id="multiple"><h2>4. لو عايز تصدّر أكتر من حاجة</h2>
+<p>بدل ما تصدّر دالة واحدة، ممكن تصدّر Object فيه الدالة ونص أو أي قيم تانية.</p>
+<h3>طريقة 1: Object كامل</h3><pre>module.exports = {
+  handler: requestHandler,
+  someText: 'Welcome to Node.js'
+};</pre>
+<h3>طريقة 2: إضافة Properties منفصلة</h3><pre>module.exports.handler = requestHandler;
+module.exports.someText = 'Welcome to Node.js';</pre>
+<h3>طريقة 3: اختصار exports</h3><pre>exports.handler = requestHandler;
+exports.someText = 'Welcome to Node.js';</pre>
+<p><b>الطرق الثلاث فوق بتوصل لنفس شكل الـ Object.</b> وفي <code>app.js</code> هتستخدم:</p>
+<pre>const http = require('http');
+const routes = require('./routes');
+
+console.log(routes.someText);
+const server = http.createServer(routes.handler);
+server.listen(3000);</pre>
+<div class="note warning"><b>غلطة مشهورة:</b> <code>exports.handler = fn</code> صح، لكن <code>exports = fn</code> مش بديل عن <code>module.exports = fn</code>. لأنك كده غيّرت المتغير المختصر فقط، مش القيمة اللي Node.js بيصدّرها.</div>
+</section>
+<section class="card" id="cache"><h2>5. إيه هو Module Cache؟</h2>
+<ol><li>أول مرة تستخدم <code>require('./routes')</code>، Node.js بيحمّل الملف وينفّذ محتواه.</li><li>بيرجع القيمة الموجودة في <code>module.exports</code>.</li><li>بيحتفظ بالـ Module في الـ Cache؛ فغالبًا المرات التالية مش بتنفّذ الملف من أول وجديد.</li></ol>
+<div class="note">الـ Cache مش معناه إن البيانات مستحيل تتغير: لو صدّرت Object، ممكن كود تاني يعدّل Properties فيه. لكن ده <b>مش بيعدّل نص ملف JavaScript الموجود على القرص</b>.</div>
+</section>
+<section class="card"><h2>6. ورقة مراجعة سريعة</h2>
+<table><tr><th>الكود</th><th>بيعمل إيه؟</th></tr><tr><td><code>require('http')</code></td><td>استيراد Module مدمج</td></tr><tr><td><code>require('./routes')</code></td><td>استيراد ملف محلي</td></tr><tr><td><code>module.exports = fn</code></td><td>تصدير Function واحدة</td></tr><tr><td><code>module.exports = {...}</code></td><td>تصدير Object</td></tr><tr><td><code>exports.handler = fn</code></td><td>إضافة خاصية لشيء بيتم تصديره</td></tr><tr><td><code>routes</code></td><td>مرجع للدالة، من غير تنفيذها</td></tr><tr><td><code>routes()</code></td><td>تنفيذ الدالة فورًا</td></tr></table>
+<p><b>ملحوظة:</b> الدرس ده بيستخدم نظام <b>CommonJS</b> (<code>require</code> / <code>module.exports</code>). فيه كمان نظام اسمه <b>ES Modules</b> بيستخدم <code>import</code> / <code>export</code>.</p>
+</section>
+<section class="card" id="quiz"><h2>7. اختبر نفسك — 4 أسئلة</h2><p>اختار إجابة لكل سؤال، وبعدها اضغط "صحّح إجاباتي".</p>
+<div id="questions"></div><button class="action" onclick="gradeQuiz()">صحّح إجاباتي</button> <button class="action" style="background:#64748b" onclick="resetQuiz()">إعادة</button><div class="result" id="result" aria-live="polite"></div></section>
+<div class="footer">دليل Node.js Modules — نسخة HTML مستقلة للمذاكرة بدون إنترنت · للطباعة: <kbd>Ctrl</kbd> + <kbd>P</kbd></div>
+</main>
+<script>
+const questions=[
+ {q:'ما وظيفة module.exports = requestHandler؟',options:['تشغيل السيرفر','جعل الدالة متاحة لملفات أخرى','تنفيذ الدالة فورًا'],correct:1,why:'module.exports يحدد القيمة التي يعيدها require.'},
+ {q:'ليه بنكتب http.createServer(routes) من غير أقواس؟',options:['لتمرير الدالة كي تنفّذ مع كل Request','لأن routes نص','لتنفيذ الدالة في نفس اللحظة'],correct:0,why:'createServer يحتاج مرجع دالة، وليس نتيجة تنفيذها.'},
+ {q:'لو routes.js صدّر Object يحتوي على handler، نمرّر إيه؟',options:['routes','routes.someText','routes.handler'],correct:2,why:'الدالة موجودة في خاصية handler داخل الـ Object.'},
+ {q:'معنى ./routes في require إيه؟',options:['Module مدمج','ملف محلي نسبي للمجلد الحالي','عنوان موقع'],correct:1,why:'./ يشير إلى المجلد الموجود فيه الملف الذي يستدعي require.'}
+];
+const host=document.getElementById('questions');
+function buildQuiz(){host.innerHTML=questions.map((item,i)=>`<div class="quiz-item"><b>${i+1}. ${item.q}</b>${item.options.map((option,j)=>`<label class="option"><input type="radio" name="q${i}" value="${j}">${option}</label>`).join('')}<div class="answer" id="answer${i}"></div></div>`).join('')}
+function gradeQuiz(){let score=0;questions.forEach((q,i)=>{let picked=document.querySelector(`input[name="q${i}"]:checked`);let correct= picked && Number(picked.value)===q.correct;if(correct)score++;let el=document.getElementById('answer'+i);el.style.display='block';el.textContent=(correct?'✅ صح! ':'❌ الإجابة الصحيحة: '+q.options[q.correct]+'. ')+q.why;el.style.color=correct?'#087f5b':'#b42318'});let result=document.getElementById('result');result.style.display='block';result.textContent=`درجتك: ${score} من ${questions.length}. ${score===questions.length?'ممتاز! فهمت الفكرة الأساسية.':'راجع الشرح فوق وحاول مرة كمان.'}`}
+function resetQuiz(){buildQuiz();document.getElementById('result').style.display='none'}
+function copyCode(button){const t=button.nextElementSibling.innerText;navigator.clipboard?.writeText(t).then(()=>{button.textContent='تم النسخ ✓';setTimeout(()=>button.textContent='نسخ',1400)}).catch(()=>{button.textContent='حدد الكود وانسخه'})}
+buildQuiz();
+</script>
+</body></html>
